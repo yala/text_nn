@@ -39,7 +39,7 @@ def train_model(train_data, dev_data, model, gen, args):
     if args.class_balance:
         sampler = torch.utils.data.sampler.WeightedRandomSampler(
                 weights=train_data.weights,
-                num_samples=len(data),
+                num_samples=len(train_data),
                 replacement=True)
         train_loader = torch.utils.data.DataLoader(
                 train_data,
