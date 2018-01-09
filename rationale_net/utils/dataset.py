@@ -73,6 +73,19 @@ def getGloveEmbedding(args):
     embedding_tensor = np.array(embedding_tensor, dtype=np.float32)
     return embedding_tensor, word_to_indx
 
+@RegisterEmbedding('pathology')
+def getPathologyEmbedding(args):
+    embedding_path = 'pickle_files/embeddings.p'
+    word_to_indx_path = 'pickle_files/vocabIndxDict.p'
+    embedding_tensor = pickle.load(open(embedding_path,'r'))
+    word_to_indx = pickle.load(open(word_to_indx_path,'r'))
+    ## Add 0 embed at indx 0
+    embedding_tensor = np.vstack( [np.zeros( (1, embedding_tensor.shape[1])), embedding_tensor ]).astype( np.float32)
+    for word in word_to_indx:
+        word_to_indx[word] += 1
+    return embedding_tensor, word_to_indx
+
+
 
 def get_indices_tensor(text_arr, word_to_indx, max_length):
     '''
