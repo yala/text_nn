@@ -26,7 +26,7 @@ To run grid search, see `docs/dispatcher`
 ### How to add a new dataset:
 - Add a pytorch Dataset object to `rationale_net/datasets` and register it to the dataset factory
 ### How to add a new model base?
-- Supported in research version of this repo, but it's involved.
+- Supported in research version of this repo, but it's involved. If there is interest, please contact me.
 
 
 
