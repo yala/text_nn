@@ -1,0 +1,27 @@
+{
+     "search_space": {
+          "batch_size": [128],
+          "cuda": [true],
+          "dataset": ["pathology"],
+          "embedding": ["pathology"],
+          "aspect": ["DCIS", "IDC", "ADH"],
+          "dropout": [0.25],
+          "num_layers": [1],
+          "epochs": [25],
+          "init_lr": [1e-05],
+          "num_workers": [8],
+          "objective": ["cross_entropy"],
+          "patience": [10],
+          "plot_losses": [false],
+          "save_dir": ["snapshot"],
+          "train": [true],
+          "test": [false],
+          "get_rationales": [true],
+          "use_gumbel": [true],
+          "selection_lambda": [.01],
+          "continuity_lambda":[.01],
+          "gumbel_decay":[.00001],
+          "gumbel_temprature":[1]
+     },
+     "available_gpus":[0,1,2]
+}

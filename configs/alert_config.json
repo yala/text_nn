@@ -1,0 +1,5 @@
+{
+     "path_to_twilio_secret": "secrets/twilio_info.json",
+     "alert_nums": ["your-phone-number"],
+     "suppress_alerts":false
+}
