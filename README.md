@@ -10,10 +10,11 @@ original frame work in the following way:
 
 ## Usage:
 Example run:
-```CUDA_VISIBLE_DEVICES=2 python -u scripts/main.py  --batch_size 64 --cuda --dataset full_beer --embeddin
-g glove --dropout 0.05 --weight_decay 5e-06 --num_layers 1 --model_form cnn --hidden_dim 100 --epochs 50 --init_lr 0.0001 --num_workers
- 0 --objective cross_entropy --patience 5 --save_dir snapshot --train --test --results_path logs/adhoc_0.results  --gumbel_decay 1e-5 -
--get_rationales
+```
+CUDA_VISIBLE_DEVICES=2 python -u scripts/main.py  --batch_size 64 --cuda --dataset full_beer --embedding 
+glove --dropout 0.05 --weight_decay 5e-06 --num_layers 1 --model_form cnn --hidden_dim 100 --epochs 50 --init_lr 0.0001 --num_workers
+ 0 --objective cross_entropy --patience 5 --save_dir snapshot --train --test --results_path logs/adhoc_0.results  --gumbel_decay 1e-5 --get_rationales
+ --aspect aroma --selection_lambda .005 --continuity_lambda .01
 ```
 Use `--get_rationales` to enable extractive rationales.
 

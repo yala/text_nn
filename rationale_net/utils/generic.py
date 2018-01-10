@@ -58,7 +58,6 @@ def parse_args():
     parser.add_argument('--get_rationales',  action='store_true', default=False, help="output attributions for dataset")
     parser.add_argument('--selection_lambda', type=float, default=.01, help="y1 in Gen cost L + y1||z|| + y2|zt - zt-1| + y3|{z}|")
     parser.add_argument('--continuity_lambda', type=float, default=.01, help="y2 in Gen cost L + y1||z|| + y2|zt - zt-1|+ y3|{z}|")
-    parser.add_argument('--get_attributions', type=bool, default=False, help="output attributions for dataset")
 
     parser.add_argument('--num_class', type=int, default=2, help="num classes")
 
