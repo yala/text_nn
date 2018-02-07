@@ -34,8 +34,7 @@ def init_metrics_dictionary(modes):
     epoch_stats = {}
     metrics = [
         'loss', 'obj_loss', 'k_selection_loss',
-        'k_continuity_loss', 'metric'
-        ]
+        'k_continuity_loss', 'metric', 'confusion_matrix']
     for metric in metrics:
         for mode in modes:
             key = "{}_{}".format(mode, metric)
