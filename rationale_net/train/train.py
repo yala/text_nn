@@ -242,13 +242,16 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
 
     if args.objective  in ['cross_entropy', 'margin']:
         metric = sklearn.metrics.accuracy_score(y_true=golds, y_pred=preds)
+        confusion_matrix = sklearn.metrics.confusion_matrix(y_true=golds,y_pred=preds)
     elif args.objective == 'mse':
         metric = sklearn.metrics.mean_squared_error(y_true=golds, y_pred=preds)
+        confusion_matrix = "NA"
 
     epoch_stat = {
         'loss' : np.mean(losses),
         'obj_loss': np.mean(obj_losses),
-        'metric':metric
+        'metric':metric,
+        'confusion_matrix': confusion_matrix 
     }
 
     if args.get_rationales:
