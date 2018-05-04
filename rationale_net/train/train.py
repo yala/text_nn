@@ -70,7 +70,7 @@ def train_model(train_data, dev_data, model, gen, args):
             train_model = mode == 'Train'
             print('{}'.format(mode))
             key_prefix = mode.lower()
-            epoch_details, step, _, preds, golds = run_epoch(
+            epoch_details, step, _, _, _ = run_epoch(
                 data_loader=loader,
                 train_model=train_model,
                 model=model,
