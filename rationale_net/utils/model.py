@@ -1,14 +1,20 @@
 import torch
 import rationale_net.models.encoder as encoder
 import rationale_net.models.generator as generator
+import rationale_net.models.tagger as tagger
+import rationale_net.models.empty as empty
 import rationale_net.utils.train as train_utils
 import os
 import pdb
 
 def get_model(args, embeddings, train_data):
     if args.snapshot is None:
-        gen   = generator.Generator(embeddings, args)
-        model = encoder.Encoder(embeddings, args)
+        if args.use_as_classifier == False:
+            gen = empty.Empty()
+            model = tagger.Tagger(embeddings, args)
+        else:
+            gen   = generator.Generator(embeddings, args)
+            model = encoder.Encoder(embeddings, args)
     else :
         print('\nLoading model from [%s]...' % args.snapshot)
         try:

@@ -43,7 +43,7 @@ def train_model(train_data, dev_data, model, gen, args):
                 replacement=True)
         train_loader = torch.utils.data.DataLoader(
                 train_data,
-                num_workers= args.num_workers,
+                num_workers=args.num_workers,
                 sampler=sampler,
                 batch_size=args.batch_size)
     else:
@@ -52,7 +52,7 @@ def train_model(train_data, dev_data, model, gen, args):
             batch_size=args.batch_size,
             shuffle=True,
             num_workers=args.num_workers,
-            drop_last=True)
+            drop_last=False)
 
 
     dev_loader = torch.utils.data.DataLoader(
@@ -70,7 +70,7 @@ def train_model(train_data, dev_data, model, gen, args):
             train_model = mode == 'Train'
             print('{}'.format(mode))
             key_prefix = mode.lower()
-            epoch_details, step, _, _, _ = run_epoch(
+            epoch_details, step, _, preds, golds = run_epoch(
                 data_loader=loader,
                 train_model=train_model,
                 model=model,
@@ -214,6 +214,9 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
 
         logit, _ = model(x_indx, mask=mask)
 
+        if args.use_as_classifier == False:
+            logit = logit.view(-1,2)
+            y = y.view(-1)
 
         loss = get_loss(logit, y, args)
         obj_loss = loss
@@ -237,9 +240,12 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
         preds.extend(
             torch.max(logit.data,
                       1)[1].view(y.size()).cpu().numpy())  # Record predictions
-        golds.extend(batch['y'].numpy())
+        if args.use_as_classifier == False:
+            golds.extend(batch['y'].view(-1).numpy())
+        else:
+            golds.extend(batch['y'].numpy())
 
-
+    #pdb.set_trace()
     if args.objective  in ['cross_entropy', 'margin']:
         metric = sklearn.metrics.accuracy_score(y_true=golds, y_pred=preds)
         confusion_matrix = sklearn.metrics.confusion_matrix(y_true=golds,y_pred=preds)
@@ -258,16 +264,23 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
         epoch_stat['k_selection_loss'] = np.mean(k_selection_losses)
         epoch_stat['k_continuity_loss'] = np.mean(k_continuity_losses)
 
-    return epoch_stat, step,  losses, preds, golds
+    return epoch_stat, step, losses, preds, golds
 
 
-def get_loss(logit,y, args ):
+def get_loss(logit,y, args):
     if args.objective == 'cross_entropy':
+        if args.use_as_classifier == False:
+            loss = F.cross_entropy(logit, y, reduce=False)
+            neg_loss = torch.sum(loss * (y == 0).float()) / torch.sum(y == 0).float()
+            pos_loss = torch.sum(loss * (y == 1).float()) / torch.sum(y == 1).float()
+            #pdb.set_trace()
+            loss = (neg_loss + pos_loss) / 2
+        else:
             loss = F.cross_entropy(logit, y)
     elif args.objective == 'margin':
-            loss = F.multi_margin_loss(logit, y)
+        loss = F.multi_margin_loss(logit, y)
     elif args.objective == 'mse':
-            loss = F.mse_loss(logit, y.float())
+        loss = F.mse_loss(logit, y.float())
     else:
         raise Exception(
             "Objective {} not supported!".format(args.objective))
