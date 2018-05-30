@@ -245,7 +245,6 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
         else:
             golds.extend(batch['y'].numpy())
 
-    #pdb.set_trace()
     if args.objective  in ['cross_entropy', 'margin']:
         metric = sklearn.metrics.accuracy_score(y_true=golds, y_pred=preds)
         confusion_matrix = sklearn.metrics.confusion_matrix(y_true=golds,y_pred=preds)
@@ -273,7 +272,6 @@ def get_loss(logit,y, args):
             loss = F.cross_entropy(logit, y, reduce=False)
             neg_loss = torch.sum(loss * (y == 0).float()) / torch.sum(y == 0).float()
             pos_loss = torch.sum(loss * (y == 1).float()) / torch.sum(y == 1).float()
-            #pdb.set_trace()
             loss = (neg_loss + pos_loss) / 2
         else:
             loss = F.cross_entropy(logit, y)
