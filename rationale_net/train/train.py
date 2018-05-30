@@ -214,8 +214,8 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
 
         logit, _ = model(x_indx, mask=mask)
 
-        if args.use_as_classifier == False:
-            logit = logit.view(-1,2)
+        if args.use_as_tagger == True:
+            logit = logit.view(-1, 2)
             y = y.view(-1)
 
         loss = get_loss(logit, y, args)
@@ -240,7 +240,7 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
         preds.extend(
             torch.max(logit.data,
                       1)[1].view(y.size()).cpu().numpy())  # Record predictions
-        if args.use_as_classifier == False:
+        if args.use_as_tagger == True:
             golds.extend(batch['y'].view(-1).numpy())
         else:
             golds.extend(batch['y'].numpy())
@@ -269,7 +269,7 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
 
 def get_loss(logit,y, args):
     if args.objective == 'cross_entropy':
-        if args.use_as_classifier == False:
+        if args.use_as_tagger == True:
             loss = F.cross_entropy(logit, y, reduce=False)
             neg_loss = torch.sum(loss * (y == 0).float()) / torch.sum(y == 0).float()
             pos_loss = torch.sum(loss * (y == 1).float()) / torch.sum(y == 1).float()

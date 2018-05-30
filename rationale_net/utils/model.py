@@ -9,7 +9,7 @@ import pdb
 
 def get_model(args, embeddings, train_data):
     if args.snapshot is None:
-        if args.use_as_classifier == False:
+        if args.use_as_tagger == True:
             gen = empty.Empty()
             model = tagger.Tagger(embeddings, args)
         else:

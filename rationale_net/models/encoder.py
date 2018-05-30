@@ -20,7 +20,7 @@ class Encoder(nn.Module):
         self.embedding_bn = nn.BatchNorm1d( hidden_dim)
 
         if args.model_form == 'cnn':
-            self.cnn = cnn.CNN(args, max_pool_over_time=args.use_as_classifier)
+            self.cnn = cnn.CNN(args, max_pool_over_time=(not args.use_as_tagger))
             self.fc = nn.Linear( len(args.filters)*args.filter_num,  args.hidden_dim)
         else:
             raise NotImplementedError("Model form {} not yet supported for encoder!".format(args.model_form))
