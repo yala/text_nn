@@ -7,11 +7,10 @@ import pdb
 
 class Encoder(nn.Module):
 
-    def __init__(self, embeddings, args, use_as_classifier=True):
+    def __init__(self, embeddings, args):
         super(Encoder, self).__init__()
         ### Encoder
         self.args = args
-        self.use_as_classifier = use_as_classifier
         vocab_size, hidden_dim = embeddings.shape
         self.embedding_dim = hidden_dim
         self.embedding_layer = nn.Embedding( vocab_size, hidden_dim)
@@ -21,7 +20,7 @@ class Encoder(nn.Module):
         self.embedding_bn = nn.BatchNorm1d( hidden_dim)
 
         if args.model_form == 'cnn':
-            self.cnn = cnn.CNN(args, max_pool_over_time= True)
+            self.cnn = cnn.CNN(args, max_pool_over_time=(not args.use_as_tagger))
             self.fc = nn.Linear( len(args.filters)*args.filter_num,  args.hidden_dim)
         else:
             raise NotImplementedError("Model form {} not yet supported for encoder!".format(args.model_form))
