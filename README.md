@@ -18,16 +18,25 @@ This code supports the the NewsGroup dataset and the BeerReview dataset. The for
 ## Usage:
 Example run:
 ```
-CUDA_VISIBLE_DEVICES=2 python -u scripts/main.py  --batch_size 64 --cuda --dataset news_group --embedding
+CUDA_VISIBLE_DEVICES=0 python -u scripts/main.py  --batch_size 64 --cuda --dataset news_group --embedding
 glove --dropout 0.05 --weight_decay 5e-06 --num_layers 1 --model_form cnn --hidden_dim 100 --epochs 50 --init_lr 0.0001 --num_workers
  0 --objective cross_entropy --patience 5 --save_dir snapshot --train --test --results_path logs/demo_run.results  --gumbel_decay 1e-5 --get_rationales
- --selection_lambda .005 --continuity_lambda .01
+ --selection_lambda .001 --continuity_lambda 0
 ```
 Use `--get_rationales` to enable extractive rationales.
 
 The results and extracted rationales will be saved in `result_path`
+And be accessed as
 
-To run grid search, see `docs/dispatcher`
+```
+results = pickle.load(open(results_path,'rb'))
+rationales = results['test_stats']['rationales']
+```
+
+To run grid search, see `docs/dispatcher`.
+
+Note, the rationale model is very sensitive to hyperparameters and the example run has not been tuned.
+
 
 ## Base Models Supported:
 - TextCNN (Yoon 2014)
