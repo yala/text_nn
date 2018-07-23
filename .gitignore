@@ -1,3 +1,5 @@
+# Data dirs
+data/
 # Byte-compiled / optimized / DLL files
 venv3
 logs

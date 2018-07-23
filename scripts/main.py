@@ -3,11 +3,11 @@ import sys
 sys.path.append(dirname(dirname(realpath(__file__))))
 import argparse
 
-import rationale_net.datasets as datasets
-from   rationale_net.utils import *
-import rationale_net.utils as utils
-import rationale_net.utils.model as model_utils
-import rationale_net.train.train as train
+import rationale_net.datasets.factory as dataset_factory
+import rationale_net.utils.embedding as embedding
+import rationale_net.utils.model as model_factory
+import rationale_net.utils.generic as generic
+import rationale_net.learn.train as train
 import os
 import torch
 import datetime
@@ -17,17 +17,17 @@ import pdb
 
 if __name__ == '__main__':
     # update args and print
-    args = utils.generic.parse_args()
+    args = generic.parse_args()
 
-    embeddings, word_to_indx = utils.dataset.get_embedding_tensor(args)
+    embeddings, word_to_indx = embedding.get_embedding_tensor(args)
 
-    train_data, dev_data, test_data = datasets.factory.get_dataset(args, word_to_indx)
+    train_data, dev_data, test_data = dataset_factory.get_dataset(args, word_to_indx)
 
     results_path_stem = args.results_path.split('/')[-1].split('.')[0]
     args.model_path = '{}.pt'.format(os.path.join(args.save_dir, results_path_stem))
 
     # model
-    gen, model = model_utils.get_model(args, embeddings, train_data)
+    gen, model = model_factory.get_model(args, embeddings, train_data)
 
     print()
     # train

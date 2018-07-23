@@ -3,14 +3,14 @@ import sys
 import torch
 import torch.autograd as autograd
 import torch.nn.functional as F
-import torch.utils.data as data
 import rationale_net.utils.generic as generic
 import rationale_net.utils.metrics as metrics
 import tqdm
 import numpy as np
 import pdb
 import sklearn.metrics
-import rationale_net.utils.train as utils
+import rationale_net.utils.learn as learn
+
 
 def train_model(train_data, dev_data, model, gen, args):
     '''
@@ -28,39 +28,18 @@ def train_model(train_data, dev_data, model, gen, args):
         gen = gen.cuda()
 
     args.lr = args.init_lr
-    optimizer = utils.get_optimizer([model, gen], args)
+    optimizer = learn.get_optimizer([model, gen], args)
 
     num_epoch_sans_improvement = 0
     epoch_stats = metrics.init_metrics_dictionary(modes=['train', 'dev'])
     step = 0
+    tuning_key = "dev_{}".format(args.tuning_metric)
+    best_epoch_func = min if tuning_key == 'loss' else max
+
+    train_loader = learn.get_train_loader(train_data, args)
+    dev_loader = learn.get_dev_loader(dev_data, args)
 
 
-
-    if args.class_balance:
-        sampler = torch.utils.data.sampler.WeightedRandomSampler(
-                weights=train_data.weights,
-                num_samples=len(train_data),
-                replacement=True)
-        train_loader = torch.utils.data.DataLoader(
-                train_data,
-                num_workers=args.num_workers,
-                sampler=sampler,
-                batch_size=args.batch_size)
-    else:
-        train_loader = torch.utils.data.DataLoader(
-            train_data,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers,
-            drop_last=False)
-
-
-    dev_loader = torch.utils.data.DataLoader(
-        dev_data,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        drop_last=False)
 
 
     for epoch in range(1, args.epochs + 1):
@@ -70,7 +49,7 @@ def train_model(train_data, dev_data, model, gen, args):
             train_model = mode == 'Train'
             print('{}'.format(mode))
             key_prefix = mode.lower()
-            epoch_details, step, _, _, _ = run_epoch(
+            epoch_details, step, _, _, _, _ = run_epoch(
                 data_loader=loader,
                 train_model=train_model,
                 model=model,
@@ -84,21 +63,25 @@ def train_model(train_data, dev_data, model, gen, args):
             # Log  performance
             print(log_statement)
 
-            if not train_model:
-                print('---- Best Dev Loss is {:.4f}'.format(
-                    min(epoch_stats['dev_loss'])))
 
         # Save model if beats best dev
-        if min(epoch_stats['dev_loss']) == epoch_stats['dev_loss'][-1]:
+        best_func = min if args.tuning_metric == 'loss' else max
+        if best_func(epoch_stats[tuning_key]) == epoch_stats[tuning_key][-1]:
             num_epoch_sans_improvement = 0
             if not os.path.isdir(args.save_dir):
                 os.makedirs(args.save_dir)
             # Subtract one because epoch is 1-indexed and arr is 0-indexed
             epoch_stats['best_epoch'] = epoch - 1
             torch.save(model, args.model_path)
-            torch.save(gen, utils.get_gen_path(args.model_path))
+            torch.save(gen, learn.get_gen_path(args.model_path))
         else:
             num_epoch_sans_improvement += 1
+
+        if not train_model:
+            print('---- Best Dev {} is {:.4f} at epoch {}'.format(
+                args.tuning_metric,
+                epoch_stats[tuning_key][epoch_stats['best_epoch']],
+                epoch_stats['best_epoch'] + 1))
 
         if num_epoch_sans_improvement >= args.patience:
             print("Reducing learning rate")
@@ -106,20 +89,20 @@ def train_model(train_data, dev_data, model, gen, args):
             model.cpu()
             gen.cpu()
             model = torch.load(args.model_path)
-            gen = torch.load(utils.get_gen_path(args.model_path))
+            gen = torch.load(learn.get_gen_path(args.model_path))
 
             if args.cuda:
                 model = model.cuda()
                 gen   = gen.cuda()
             args.lr *= .5
-            optimizer = utils.get_optimizer([model, gen], args)
+            optimizer = learn.get_optimizer([model, gen], args)
 
     # Restore model to best dev performance
     if os.path.exists(args.model_path):
         model.cpu()
         model = torch.load(args.model_path)
         gen.cpu()
-        gen = torch.load(utils.get_gen_path(args.model_path))
+        gen = torch.load(learn.get_gen_path(args.model_path))
 
     return epoch_stats, model, gen
 
@@ -145,7 +128,7 @@ def test_model(test_data, model, gen, args):
     train_model = False
     key_prefix = mode.lower()
     print("-------------\nTest")
-    epoch_details, _, losses, preds, golds = run_epoch(
+    epoch_details, _, losses, preds, golds, rationales = run_epoch(
         data_loader=test_loader,
         train_model=train_model,
         model=model,
@@ -158,6 +141,7 @@ def test_model(test_data, model, gen, args):
     test_stats['losses'] = losses
     test_stats['preds'] = preds
     test_stats['golds'] = golds
+    test_stats['rationales'] = rationales
 
     print(log_statement)
 
@@ -177,6 +161,8 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
     preds = []
     golds = []
     losses = []
+    texts = []
+    rationales = []
 
     if train_model:
         model.train()
@@ -196,9 +182,8 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
             if  step % 100 == 0 or args.debug_mode:
                 args.gumbel_temprature = max( np.exp((step+1) *-1* args.gumbel_decay), .05)
 
-        x_indx = utils.get_x_indx(batch, args, eval_model)
+        x_indx = learn.get_x_indx(batch, args, eval_model)
         text = batch['text']
-        indices = batch['i']
         y = autograd.Variable(batch['y'], volatile=eval_model)
 
         if args.cuda:
@@ -224,8 +209,8 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
         if args.get_rationales:
             selection_cost, continuity_cost = gen.loss(mask, x_indx)
 
-            loss += args.selection_lambda* selection_cost
-            loss += args.continuity_lambda* continuity_cost
+            loss += args.selection_lambda * selection_cost
+            loss += args.continuity_lambda * continuity_cost
 
         if train_model:
             loss.backward()
@@ -237,33 +222,34 @@ def run_epoch(data_loader, train_model, model, gen, optimizer, step, args):
 
         obj_losses.append(generic.tensor_to_numpy(obj_loss))
         losses.append( generic.tensor_to_numpy(loss) )
-        preds.extend(
-            torch.max(logit.data,
-                      1)[1].view(y.size()).cpu().numpy())  # Record predictions
+        batch_softmax = F.softmax(logit, dim=-1).cpu()
+        preds.extend(torch.max(batch_softmax, 1)[1].view(y.size()).data.numpy())
+
+        texts.extend(text)
+        rationales.extend(learn.get_rationales(mask, text))
+
         if args.use_as_tagger:
             golds.extend(batch['y'].view(-1).numpy())
         else:
             golds.extend(batch['y'].numpy())
 
-    if args.objective  in ['cross_entropy', 'margin']:
-        metric = sklearn.metrics.accuracy_score(y_true=golds, y_pred=preds)
-        confusion_matrix = sklearn.metrics.confusion_matrix(y_true=golds,y_pred=preds)
-    elif args.objective == 'mse':
-        metric = sklearn.metrics.mean_squared_error(y_true=golds, y_pred=preds)
-        confusion_matrix = "NA"
+
+
+    epoch_metrics = metrics.get_metrics(preds, golds, args)
 
     epoch_stat = {
         'loss' : np.mean(losses),
-        'obj_loss': np.mean(obj_losses),
-        'metric':metric,
-        'confusion_matrix': confusion_matrix 
+        'obj_loss': np.mean(obj_losses)
     }
+
+    for metric_k in epoch_metrics.keys():
+        epoch_stat[metric_k] = epoch_metrics[metric_k]
 
     if args.get_rationales:
         epoch_stat['k_selection_loss'] = np.mean(k_selection_losses)
         epoch_stat['k_continuity_loss'] = np.mean(k_continuity_losses)
 
-    return epoch_stat, step, losses, preds, golds
+    return epoch_stat, step, losses, preds, golds, rationales
 
 
 def get_loss(logit,y, args):
@@ -272,11 +258,9 @@ def get_loss(logit,y, args):
             loss = F.cross_entropy(logit, y, reduce=False)
             neg_loss = torch.sum(loss * (y == 0).float()) / torch.sum(y == 0).float()
             pos_loss = torch.sum(loss * (y == 1).float()) / torch.sum(y == 1).float()
-            loss = args.lbda * neg_loss + (1 - args.lbda) * pos_loss
+            loss = args.tag_lambda * neg_loss + (1 - args.tag_lambda) * pos_loss
         else:
             loss = F.cross_entropy(logit, y)
-    elif args.objective == 'margin':
-        loss = F.multi_margin_loss(logit, y)
     elif args.objective == 'mse':
         loss = F.mse_loss(logit, y.float())
     else:

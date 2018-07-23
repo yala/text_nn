@@ -1,11 +1,6 @@
-import torch
-import torch.utils.data as data
 import gzip
-import rationale_net.utils.dataset as utils
 import tqdm
-import numpy as np
-import pickle
-import json
+from rationale_net.utils.embedding import get_indices_tensor
 from rationale_net.datasets.factory import RegisterDataset
 from rationale_net.datasets.abstract_dataset import AbstractDataset
 
@@ -67,6 +62,6 @@ class FullBeerDataset(AbstractDataset):
             self.args.num_class = 3
         text_list = line.split('\t')[-1].split()[:self.max_length]
         text = " ".join(text_list)
-        x =  utils.get_indices_tensor(text_list, self.word_to_indx, self.max_length)
+        x =  get_indices_tensor(text_list, self.word_to_indx, self.max_length)
         sample = {'text':text,'x':x, 'y':label, 'i':i}
         return sample

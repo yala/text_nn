@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.autograd as autograd
 import torch.nn.functional as F
 import rationale_net.models.cnn as cnn
-import rationale_net.utils.train as utils
+import rationale_net.utils.learn as learn
 import pdb
 
 '''
@@ -37,7 +37,7 @@ class Generator(nn.Module):
         '''
         activ = activ.transpose(1,2)
         logits = self.hidden(activ)
-        probs = utils.gumbel_softmax(logits, self.args.gumbel_temprature, self.args.cuda)
+        probs = learn.gumbel_softmax(logits, self.args.gumbel_temprature, self.args.cuda)
         z = probs[:,:,1]
         return z
 
@@ -71,7 +71,7 @@ class Generator(nn.Module):
             mask = z
         else:
             ## pointwise set <.5 to 0 >=.5 to 1
-            mask = utils.get_hard_mask(z)
+            mask = learn.get_hard_mask(z)
         return mask
 
 

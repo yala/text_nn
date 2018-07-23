@@ -1,11 +1,53 @@
 import torch
 import torch.autograd as autograd
 import torch.nn.functional as F
-import gc
-import pprint
-from collections import Counter
-import sklearn.metrics.pairwise as pairwise
 import numpy as np
+import torch.utils.data as data
+import pdb
+
+def get_train_loader(train_data, args):
+    if args.class_balance:
+        sampler = data.sampler.WeightedRandomSampler(
+                weights=train_data.weights,
+                num_samples=len(train_data),
+                replacement=True)
+        train_loader = data.DataLoader(
+                train_data,
+                num_workers=args.num_workers,
+                sampler=sampler,
+                batch_size=args.batch_size)
+    else:
+        train_loader = data.DataLoader(
+            train_data,
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=args.num_workers,
+            drop_last=False)
+
+    return train_loader
+
+def get_rationales(mask, text):
+    if mask is None:
+        return text
+    masked_text = []
+    for i, t in enumerate(text):
+        sample_mask = list(mask.data[i])
+        original_words = t.split()
+        words = [ w if m  > .5 else "_" for w,m in zip(original_words, sample_mask) ]
+        masked_sample = " ".join(words)
+        masked_text.append(masked_sample)
+    return masked_text
+
+
+
+def get_dev_loader(dev_data, args):
+    dev_loader = data.DataLoader(
+        dev_data,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        drop_last=False)
+    return dev_loader
 
 def get_optimizer(models, args):
     '''

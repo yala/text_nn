@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.autograd as autograd
 import torch.nn.functional as F
 import rationale_net.models.cnn as cnn
-import rationale_net.utils.train as utils
 import pdb
 
 '''

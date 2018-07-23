@@ -3,7 +3,7 @@ import rationale_net.models.encoder as encoder
 import rationale_net.models.generator as generator
 import rationale_net.models.tagger as tagger
 import rationale_net.models.empty as empty
-import rationale_net.utils.train as train_utils
+import rationale_net.utils.learn as learn
 import os
 import pdb
 
@@ -18,7 +18,7 @@ def get_model(args, embeddings, train_data):
     else :
         print('\nLoading model from [%s]...' % args.snapshot)
         try:
-            gen_path = train_utils.get_gen_path(args.snapshot)
+            gen_path = learn.get_gen_path(args.snapshot)
             if os.path.exists(gen_path):
                 gen   = torch.load(gen_path)
             model = torch.load(args.snapshot)
