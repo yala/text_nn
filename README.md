@@ -25,7 +25,7 @@ glove --dropout 0.05 --weight_decay 5e-06 --num_layers 1 --model_form cnn --hidd
 ```
 Use `--get_rationales` to enable extractive rationales.
 
-The results and extracted rationales will be saved in `result_path`
+The results and extracted rationales will be saved in `results_path`
 And be accessed as
 
 ```
