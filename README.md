@@ -43,7 +43,9 @@ Note, the rationale model is very sensitive to hyperparameters and the example r
 
 ## Extending:
 ### How to add a new dataset:
-- Add a pytorch Dataset object to `rationale_net/datasets` and register it to the dataset factory
+- Fork the repo 
+- Add a pytorch Dataset object to `rationale_net/datasets` and register it to the dataset factory. See the news_group and beer_review datasets for an example.
+- Add the corresponding import to `rationale_net/datasets/__init__.py`
 ### How to add a new model base?
 - Supported in research version of this repo, but it's involved. If there is interest, please contact me.
 
