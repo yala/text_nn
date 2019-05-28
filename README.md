@@ -12,7 +12,7 @@ This repository assumes glove embeddings.
 Download Glove embeddings at:  https://nlp.stanford.edu/projects/glove/
 And place `glove.6B/glove.6B.300d.txt` in `data/embeddings/glove.6B/glove.6B.300d.txt`.
 
-This code supports the the NewsGroup dataset and the BeerReview dataset. The for access to the BeerReview and the corresponding embeddings, please contact me or Tao Lei. I've included the NewsGroup dataset, conveiently provided by SKLearn so you can run code out of the box.
+This code supports the the NewsGroup dataset and the BeerReview dataset. The for access to the BeerReview and the corresponding embeddings, please contact Tao Lei. I've included the NewsGroup dataset, conveiently provided by SKLearn so you can run code out of the box.
 
 
 ## Usage:
